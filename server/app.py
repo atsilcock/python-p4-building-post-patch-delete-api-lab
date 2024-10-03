@@ -23,12 +23,43 @@ def bakeries():
     bakeries = [bakery.to_dict() for bakery in Bakery.query.all()]
     return make_response(  bakeries,   200  )
 
-@app.route('/bakeries/<int:id>')
-def bakery_by_id(id):
+@app.route('/baked_goods', methods=["POST"])
+def post_baked_goods():
+    new_baked_good = BakedGood(
+        name = request.form.get("name"),
+        price = request.form.get("price"),
+        bakery_id = request.form.get("bakery_id")
+    )
 
-    bakery = Bakery.query.filter_by(id=id).first()
-    bakery_serialized = bakery.to_dict()
-    return make_response ( bakery_serialized, 200  )
+    db.session.add(new_baked_good)
+    db.session.commit()
+
+    return make_response(new_baked_good.to_dict(), 201)
+
+
+@app.route('/bakeries/<int:id>', methods = ["PATCH"])
+def update_bakeries(id):
+    name = request.form.get("name")
+    bakery = Bakery.query.filter_by(id = id).first()
+    if bakery:
+        if request.method == "PATCH": 
+            bakery.name = name
+            db.session.commit()
+            return make_response(bakery.to_dict(), 200)
+
+    
+    return make_response({"error": "invalid response"}, 404)
+
+@app.route('/baked_goods/<int:id>', methods = ["DELETE"])
+def delete_baked_goods(id):
+    baked_good = BakedGood.query.filter_by(id=id).first()
+    if baked_good:
+        db.session.delete(baked_good)
+        db.session.commit()
+        return make_response({"message":"bakery has been deleted"},200)
+    
+    return make_response({"error": "Baked good not found"}, 404)
+
 
 @app.route('/baked_goods/by_price')
 def baked_goods_by_price():
